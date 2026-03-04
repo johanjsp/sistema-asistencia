@@ -1,0 +1,114 @@
+# 🚀 INSTALACIÓN RÁPIDA
+
+## Para instalar en otro PC en 5 pasos:
+
+### 1️⃣ Instalar Node.js
+- Ve a: https://nodejs.org/
+- Descarga la versión **LTS**
+- Instálalo (siguiente, siguiente, instalar)
+
+### 2️⃣ Copiar la carpeta
+- Copia toda la carpeta "Biometrico Cresco" al nuevo PC
+- Colócala en cualquier ubicación (ej: `C:\Biometrico Cresco`)
+
+### 3️⃣ Instalar dependencias
+- Haz doble clic en: **INSTALAR.bat**
+- Espera a que termine (2-5 minutos)
+
+### 4️⃣ Iniciar el servidor
+- Haz doble clic en: **INICIAR-SERVIDOR.bat**
+- Espera a que aparezca: "Servidor corriendo en http://localhost:3000"
+
+### 5️⃣ Abrir en el navegador
+- Abre Chrome, Edge o Firefox
+- Ve a: **http://localhost:3000**
+- Login: `admin` / `admin123`
+
+---
+
+## ❗ IMPORTANTE
+
+### ⚠️ NO copies estas carpetas/archivos:
+- `node_modules/` (se reinstalará automáticamente)
+- `asistencia.db` (se creará nuevo en cada PC)
+
+### ✅ SÍ copia estas carpetas/archivos:
+- Carpeta `public/` (completa)
+- `server.js`
+- `database.js`
+- `package.json`
+- Archivos `.bat` (opcionales pero útiles)
+- Archivos `.md` (documentación)
+
+---
+
+## 📁 Archivos Útiles Incluidos
+
+- **INSTALAR.bat** - Instala las dependencias automáticamente
+- **INICIAR-SERVIDOR.bat** - Inicia el sistema fácilmente
+- **RESPALDO.bat** - Crea respaldo de la base de datos
+- **REINICIAR-SISTEMA.bat** - Borra todo y empieza desde cero
+- **GUIA-INSTALACION.md** - Guía completa detallada
+
+---
+
+## 🔧 Solución Rápida de Problemas
+
+**"node no se reconoce como comando"**
+→ Instala Node.js y reinicia el PC
+
+**"Cannot find module 'express'"**
+→ Ejecuta INSTALAR.bat de nuevo
+
+**"Port 3000 already in use"**
+→ Cierra otros programas que usen el puerto 3000
+
+**La página no carga**
+→ Verifica que el servidor esté corriendo y usa http:// (no https://)
+
+---
+
+## 📱 Usar desde el Celular (Misma Red WiFi)
+
+1. En el PC servidor, abre CMD y ejecuta: `ipconfig`
+2. Anota la "Dirección IPv4" (ej: 192.168.1.100)
+3. En el celular, abre el navegador
+4. Ve a: `http://192.168.1.100:3000`
+
+---
+
+## 🔒 Credenciales por Defecto
+
+**Administrador:**
+- Usuario: `admin`
+- Contraseña: `admin123`
+
+⚠️ **Cambia esta contraseña en producción**
+
+---
+
+## 💾 Respaldos Automáticos
+
+Ejecuta **RESPALDO.bat** regularmente para guardar tus datos.
+Los respaldos se guardan en la carpeta `Respaldos/`
+
+---
+
+## ✅ Checklist de Instalación
+
+- [ ] Node.js instalado
+- [ ] Carpeta copiada al nuevo PC
+- [ ] INSTALAR.bat ejecutado sin errores
+- [ ] INICIAR-SERVIDOR.bat funcionando
+- [ ] Página abre en http://localhost:3000
+- [ ] Login con admin funciona
+- [ ] Trabajadores pueden registrarse
+- [ ] Entrada/Salida funciona
+- [ ] Panel de admin accesible
+- [ ] Reportes se generan correctamente
+
+---
+
+**¡Listo! El sistema está operativo.** 🎉
+
+Para más información detallada, consulta: **GUIA-INSTALACION.md**
