@@ -295,6 +295,23 @@ app.get('/api/admin/estadisticas', verificarToken, verificarAdmin, (req, res) =>
   });
 });
 
+// Eliminar registro de asistencia (solo admin)
+app.delete('/api/admin/asistencias/:id', verificarToken, verificarAdmin, (req, res) => {
+  const asistenciaId = req.params.id;
+
+  db.run('DELETE FROM asistencias WHERE id = ?', [asistenciaId], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Error al eliminar el registro' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    res.json({ message: 'Registro eliminado exitosamente' });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

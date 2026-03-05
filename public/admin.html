@@ -2,7 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Panel de Administración - Sistema de Asistencia</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="admin-style.css">
@@ -233,6 +235,7 @@
                             <th>Usuario</th>
                             <th>Nombre</th>
                             <th>Tipo</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -249,12 +252,47 @@
                         <td>${a.username}</td>
                         <td>${a.nombre}</td>
                         <td><span class="badge ${tipoClass}">${icono} ${a.tipo.toUpperCase()}</span></td>
+                        <td>
+                            <button class="btn-delete" onclick="eliminarRegistro(${a.id})" title="Eliminar registro">
+                                🗑️
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
 
             html += '</tbody></table>';
             tabla.innerHTML = html;
+        }
+
+        // Eliminar registro de asistencia
+        async function eliminarRegistro(id) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este registro? Esta acción no se puede deshacer.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/asistencias/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    alert('Registro eliminado exitosamente');
+                    // Recargar la tabla
+                    const fecha = document.getElementById('filtroFecha').value;
+                    const usuario_id = document.getElementById('filtroUsuario').value;
+                    cargarAsistencias(fecha, usuario_id);
+                    // Actualizar estadísticas
+                    cargarEstadisticas();
+                } else {
+                    const data = await response.json();
+                    alert('Error: ' + (data.error || 'No se pudo eliminar el registro'));
+                }
+            } catch (error) {
+                console.error('Error al eliminar registro:', error);
+                alert('Error al eliminar el registro');
+            }
         }
 
         // Aplicar filtros

@@ -28,8 +28,8 @@ if (usePostgres) {
         let paramIndex = 0;
         pgSql = pgSql.replace(/\?/g, () => `$${++paramIndex}`);
 
-        // Si es un INSERT, agregar RETURNING id para obtener el lastID
         let result;
+        // Si es un INSERT, agregar RETURNING id para obtener el lastID
         if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
           pgSql += ' RETURNING id';
           result = await pool.query(pgSql, params);
@@ -37,8 +37,10 @@ if (usePostgres) {
           const context = { lastID: result.rows[0]?.id };
           callback.call(context, null);
         } else {
+          // Para UPDATE y DELETE, simular this.changes
           result = await pool.query(pgSql, params);
-          callback(null);
+          const context = { changes: result.rowCount || 0 };
+          callback.call(context, null);
         }
       } catch (err) {
         callback(err);
