@@ -15,43 +15,50 @@ if (usePostgres) {
 
   // Wrapper para hacer que PostgreSQL use la misma API que SQLite
   db = {
-    run: (sql, params = [], callback = () => {}) => {
-      // Convertir sintaxis SQLite a PostgreSQL
-      let pgSql = sql
-        .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY')
-        .replace(/DATETIME/gi, 'TIMESTAMP')
-        .replace(/TEXT/gi, 'VARCHAR(255)')
-        .replace(/CURRENT_TIMESTAMP/gi, 'NOW()')
-        .replace(/\?/g, (match, offset) => {
-          const index = (sql.slice(0, offset).match(/\?/g) || []).length + 1;
-          return `$${index}`;
-        });
+    run: async (sql, params = [], callback = () => {}) => {
+      try {
+        // Convertir sintaxis SQLite a PostgreSQL
+        let pgSql = sql
+          .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY')
+          .replace(/DATETIME/gi, 'TIMESTAMP')
+          .replace(/TEXT/gi, 'VARCHAR(255)')
+          .replace(/CURRENT_TIMESTAMP/gi, 'NOW()');
+        
+        // Convertir ? a $1, $2, $3...
+        let paramIndex = 0;
+        pgSql = pgSql.replace(/\?/g, () => `$${++paramIndex}`);
 
-      pool.query(pgSql, params)
-        .then(() => callback(null))
-        .catch(err => callback(err));
+        await pool.query(pgSql, params);
+        callback(null);
+      } catch (err) {
+        callback(err);
+      }
     },
     
-    get: (sql, params = [], callback) => {
-      const pgSql = sql.replace(/\?/g, (match, offset) => {
-        const index = (sql.slice(0, offset).match(/\?/g) || []).length + 1;
-        return `$${index}`;
-      });
+    get: async (sql, params = [], callback) => {
+      try {
+        let pgSql = sql;
+        let paramIndex = 0;
+        pgSql = pgSql.replace(/\?/g, () => `$${++paramIndex}`);
 
-      pool.query(pgSql, params)
-        .then(result => callback(null, result.rows[0]))
-        .catch(err => callback(err, null));
+        const result = await pool.query(pgSql, params);
+        callback(null, result.rows[0]);
+      } catch (err) {
+        callback(err, null);
+      }
     },
     
-    all: (sql, params = [], callback) => {
-      const pgSql = sql.replace(/\?/g, (match, offset) => {
-        const index = (sql.slice(0, offset).match(/\?/g) || []).length + 1;
-        return `$${index}`;
-      });
+    all: async (sql, params = [], callback) => {
+      try {
+        let pgSql = sql;
+        let paramIndex = 0;
+        pgSql = pgSql.replace(/\?/g, () => `$${++paramIndex}`);
 
-      pool.query(pgSql, params)
-        .then(result => callback(null, result.rows))
-        .catch(err => callback(err, null));
+        const result = await pool.query(pgSql, params);
+        callback(null, result.rows);
+      } catch (err) {
+        callback(err, null);
+      }
     },
 
     serialize: (callback) => {
