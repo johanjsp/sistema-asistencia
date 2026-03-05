@@ -271,11 +271,20 @@ app.get('/api/admin/resumen', verificarToken, verificarAdmin, (req, res) => {
 
 // Obtener estadísticas generales (solo admin)
 app.get('/api/admin/estadisticas', verificarToken, verificarAdmin, (req, res) => {
+  // Detectar si estamos usando PostgreSQL o SQLite
+  const usePostgres = !!process.env.DATABASE_URL;
+  
+  // Usar sintaxis apropiada según la base de datos
+  const hoySQL = usePostgres ? 'CURRENT_DATE' : 'DATE("now")';
+  const trabajadorSQL = usePostgres ? "'trabajador'" : '"trabajador"';
+  const entradaSQL = usePostgres ? "'entrada'" : '"entrada"';
+  const salidaSQL = usePostgres ? "'salida'" : '"salida"';
+  
   const queries = {
-    totalUsuarios: 'SELECT COUNT(*) as total FROM usuarios WHERE rol = "trabajador"',
-    registrosHoy: 'SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = DATE("now")',
-    entradasHoy: 'SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = DATE("now") AND tipo = "entrada"',
-    salidasHoy: 'SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = DATE("now") AND tipo = "salida"'
+    totalUsuarios: `SELECT COUNT(*) as total FROM usuarios WHERE rol = ${trabajadorSQL}`,
+    registrosHoy: `SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = ${hoySQL}`,
+    entradasHoy: `SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = ${hoySQL} AND tipo = ${entradaSQL}`,
+    salidasHoy: `SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = ${hoySQL} AND tipo = ${salidaSQL}`
   };
   
   const estadisticas = {};
@@ -283,8 +292,11 @@ app.get('/api/admin/estadisticas', verificarToken, verificarAdmin, (req, res) =>
   
   Object.keys(queries).forEach(key => {
     db.get(queries[key], [], (err, row) => {
-      if (!err) {
-        estadisticas[key] = row.total;
+      if (err) {
+        console.error(`Error en query ${key}:`, err);
+        estadisticas[key] = 0;
+      } else {
+        estadisticas[key] = row?.total || 0;
       }
       completadas++;
       
