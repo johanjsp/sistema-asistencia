@@ -13,6 +13,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+// Ruta raíz
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
 // Middleware para verificar token
 const verificarToken = (req, res, next) => {
   const token = req.headers['authorization'];
