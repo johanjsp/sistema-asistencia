@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Asistencia - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="clock-container">
+            <div id="clock" class="clock"></div>
+            <div id="date" class="date"></div>
+        </div>
+
+        <div class="card dashboard-card">
+            <div class="logo-container-dashboard">
+                <img src="img/logocolor.png" alt="Logo" class="logo-small">
+            </div>
+            <div class="header-section">
+                <h1>Bienvenido, <span id="userName"></span></h1>
+                <button id="logoutBtn" class="btn btn-secondary">Cerrar Sesión</button>
+            </div>
+
+            <div class="attendance-section">
+                <h2>Registro de Asistencia</h2>
+                
+                <div class="button-group">
+                    <button id="entradaBtn" class="btn btn-entrada">
+                        <span class="icon">⏱️</span>
+                        <span class="text">Marcar Entrada</span>
+                    </button>
+                    
+                    <button id="salidaBtn" class="btn btn-salida">
+                        <span class="icon">🚪</span>
+                        <span class="text">Marcar Salida</span>
+                    </button>
+                </div>
+
+                <div id="message" class="message"></div>
+            </div>
+
+            <div class="history-section">
+                <h3>Últimos Registros</h3>
+                <div id="historial" class="historial"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar autenticación
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token || !user.nombre) {
+            window.location.href = 'index.html';
+        }
+
+        // Redirigir admins a su dashboard
+        if (user.rol === 'admin') {
+            window.location.href = 'admin.html';
+        }
+
+        document.getElementById('userName').textContent = user.nombre;
+
+        // Actualizar reloj
+        function actualizarReloj() {
+            const ahora = new Date();
+            let horas = ahora.getHours();
+            const minutos = String(ahora.getMinutes()).padStart(2, '0');
+            const segundos = String(ahora.getSeconds()).padStart(2, '0');
+            
+            const periodo = horas >= 12 ? 'PM' : 'AM';
+            horas = horas % 12 || 12;
+            const horasFormateadas = String(horas).padStart(2, '0');
+            
+            document.getElementById('clock').textContent = `${horasFormateadas}:${minutos}:${segundos} ${periodo}`;
+            
+            const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date').textContent = ahora.toLocaleDateString('es-ES', opciones);
+        }
+
+        actualizarReloj();
+        setInterval(actualizarReloj, 1000);
+
+        // Cargar historial
+        async function cargarHistorial() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/mis-asistencias`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const asistencias = await response.json();
+                    const historialDiv = document.getElementById('historial');
+                    
+                    if (asistencias.length === 0) {
+                        historialDiv.innerHTML = '<p class="no-data">No hay registros aún</p>';
+                    } else {
+                        historialDiv.innerHTML = asistencias.map(a => {
+                            const fecha = new Date(a.timestamp);
+                            const tipoClass = a.tipo === 'entrada' ? 'entrada' : 'salida';
+                            const icono = a.tipo === 'entrada' ? '⏱️' : '🚪';
+                            return `
+                                <div class="historial-item ${tipoClass}">
+                                    <span class="historial-icon">${icono}</span>
+                                    <span class="historial-tipo">${a.tipo.toUpperCase()}</span>
+                                    <span class="historial-fecha">${fecha.toLocaleString('es-ES')}</span>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar historial:', error);
+            }
+        }
+
+        cargarHistorial();
+
+        // Marcar entrada
+        document.getElementById('entradaBtn').addEventListener('click', async () => {
+            const messageDiv = document.getElementById('message');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/entrada`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = data.message;
+                    
+                    // Desloguear automáticamente después de 2 segundos
+                    setTimeout(() => {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = data.error || 'Error al registrar entrada';
+                }
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Error de conexión con el servidor';
+            }
+        });
+
+        // Marcar salida
+        document.getElementById('salidaBtn').addEventListener('click', async () => {
+            const messageDiv = document.getElementById('message');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/salida`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = data.message;
+                    
+                    // Desloguear automáticamente después de 2 segundos
+                    setTimeout(() => {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = data.error || 'Error al registrar salida';
+                }
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Error de conexión con el servidor';
+            }
+        });
+
+        // Cerrar sesión manual
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

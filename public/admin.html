@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Sistema de Asistencia</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin-style.css">
+    <script src="config.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <div class="header-content">
+                <div class="admin-title-section">
+                    <img src="img/logoblanca.png" alt="Logo" class="admin-logo">
+                    <h1>📊 Panel de Administración</h1>
+                </div>
+                <div class="header-actions">
+                    <div id="clock" class="header-clock"></div>
+                    <span id="adminName" class="admin-name"></span>
+                    <button id="logoutBtn" class="btn btn-secondary">Cerrar Sesión</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-content">
+            <!-- Estadísticas -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Trabajadores</div>
+                        <div class="stat-value" id="totalUsuarios">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Registros Hoy</div>
+                        <div class="stat-value" id="registrosHoy">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Entradas Hoy</div>
+                        <div class="stat-value" id="entradasHoy">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🚪</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Salidas Hoy</div>
+                        <div class="stat-value" id="salidasHoy">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filters-container">
+                <h2>Filtrar Asistencias</h2>
+                <div class="filters-form">
+                    <div class="filter-group">
+                        <label for="filtroFecha">Fecha:</label>
+                        <input type="date" id="filtroFecha" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filtroUsuario">Usuario:</label>
+                        <select id="filtroUsuario" class="filter-input">
+                            <option value="">Todos los usuarios</option>
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="btnFiltrar" class="btn btn-primary">Aplicar Filtros</button>
+                        <button id="btnLimpiar" class="btn btn-secondary">Limpiar</button>
+                        <button id="btnImprimir" class="btn btn-print">🖨️ Generar Reporte</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de asistencias -->
+            <div class="table-container">
+                <h2>Registro de Asistencias</h2>
+                <div id="tablaAsistencias" class="tabla-wrapper"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de impresión -->
+    <div id="modalReporte" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Generar Reporte</h2>
+            <div class="reporte-options">
+                <div class="form-group">
+                    <label for="fechaInicioReporte">Fecha Inicio:</label>
+                    <input type="date" id="fechaInicioReporte" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="fechaFinReporte">Fecha Fin:</label>
+                    <input type="date" id="fechaFinReporte" class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label for="usuarioReporte">Usuario:</label>
+                    <select id="usuarioReporte" class="filter-input">
+                        <option value="">Todos los usuarios</option>
+                    </select>
+                </div>
+                <button id="btnGenerarReporte" class="btn btn-primary">Generar e Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar autenticación y permisos de admin
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!token || !user.nombre || user.rol !== 'admin') {
+            alert('Acceso denegado. Se requieren permisos de administrador.');
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('adminName').textContent = user.nombre;
+
+        // Actualizar reloj
+        function actualizarReloj() {
+            const ahora = new Date();
+            let horas = ahora.getHours();
+            const minutos = String(ahora.getMinutes()).padStart(2, '0');
+            const segundos = String(ahora.getSeconds()).padStart(2, '0');
+            
+            const periodo = horas >= 12 ? 'PM' : 'AM';
+            horas = horas % 12 || 12;
+            const horasFormateadas = String(horas).padStart(2, '0');
+            
+            document.getElementById('clock').textContent = `${horasFormateadas}:${minutos}:${segundos} ${periodo}`;
+        }
+
+        actualizarReloj();
+        setInterval(actualizarReloj, 1000);
+
+        // Cargar estadísticas
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/estadisticas`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('totalUsuarios').textContent = stats.totalUsuarios || 0;
+                    document.getElementById('registrosHoy').textContent = stats.registrosHoy || 0;
+                    document.getElementById('entradasHoy').textContent = stats.entradasHoy || 0;
+                    document.getElementById('salidasHoy').textContent = stats.salidasHoy || 0;
+                }
+            } catch (error) {
+                console.error('Error al cargar estadísticas:', error);
+            }
+        }
+
+        // Cargar usuarios para los selectores
+        async function cargarUsuarios() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/usuarios`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const usuarios = await response.json();
+                    const selectores = [
+                        document.getElementById('filtroUsuario'),
+                        document.getElementById('usuarioReporte')
+                    ];
+
+                    selectores.forEach(select => {
+                        usuarios.forEach(u => {
+                            if (u.rol === 'trabajador') {
+                                const option = document.createElement('option');
+                                option.value = u.id;
+                                option.textContent = u.nombre;
+                                select.appendChild(option);
+                            }
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar usuarios:', error);
+            }
+        }
+
+        // Cargar asistencias
+        async function cargarAsistencias(fecha = '', usuario_id = '') {
+            try {
+                let url = `${API_BASE_URL}/api/admin/asistencias`;
+                const params = new URLSearchParams();
+                
+                if (fecha) params.append('fecha', fecha);
+                if (usuario_id) params.append('usuario_id', usuario_id);
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const asistencias = await response.json();
+                    mostrarAsistencias(asistencias);
+                }
+            } catch (error) {
+                console.error('Error al cargar asistencias:', error);
+            }
+        }
+
+        // Mostrar asistencias en tabla
+        function mostrarAsistencias(asistencias) {
+            const tabla = document.getElementById('tablaAsistencias');
+            
+            if (asistencias.length === 0) {
+                tabla.innerHTML = '<p class="no-data">No hay registros para mostrar</p>';
+                return;
+            }
+
+            let html = `
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            asistencias.forEach(a => {
+                const fecha = new Date(a.timestamp);
+                const tipoClass = a.tipo === 'entrada' ? 'badge-entrada' : 'badge-salida';
+                const icono = a.tipo === 'entrada' ? '⏱️' : '🚪';
+                
+                html += `
+                    <tr>
+                        <td>${fecha.toLocaleString('es-ES')}</td>
+                        <td>${a.username}</td>
+                        <td>${a.nombre}</td>
+                        <td><span class="badge ${tipoClass}">${icono} ${a.tipo.toUpperCase()}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            tabla.innerHTML = html;
+        }
+
+        // Aplicar filtros
+        document.getElementById('btnFiltrar').addEventListener('click', () => {
+            const fecha = document.getElementById('filtroFecha').value;
+            const usuario_id = document.getElementById('filtroUsuario').value;
+            cargarAsistencias(fecha, usuario_id);
+        });
+
+        // Limpiar filtros
+        document.getElementById('btnLimpiar').addEventListener('click', () => {
+            document.getElementById('filtroFecha').value = '';
+            document.getElementById('filtroUsuario').value = '';
+            cargarAsistencias();
+        });
+
+        // Modal de reporte
+        const modal = document.getElementById('modalReporte');
+        const btnImprimir = document.getElementById('btnImprimir');
+        const spanClose = document.getElementsByClassName('close')[0];
+
+        btnImprimir.onclick = () => {
+            // Setear fecha de hoy por defecto
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaInicioReporte').value = hoy;
+            document.getElementById('fechaFinReporte').value = hoy;
+            modal.style.display = 'block';
+        };
+
+        spanClose.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Generar reporte
+        document.getElementById('btnGenerarReporte').addEventListener('click', async () => {
+            const fechaInicio = document.getElementById('fechaInicioReporte').value;
+            const fechaFin = document.getElementById('fechaFinReporte').value;
+            const usuario_id = document.getElementById('usuarioReporte').value;
+
+            if (!fechaInicio || !fechaFin) {
+                alert('Por favor seleccione el rango de fechas');
+                return;
+            }
+
+            // Obtener datos para el reporte
+            try {
+                let url = `${API_BASE_URL}/api/admin/asistencias`;
+                const params = new URLSearchParams();
+                
+                if (usuario_id) params.append('usuario_id', usuario_id);
+                
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const asistencias = await response.json();
+                    
+                    // Filtrar por rango de fechas en el cliente
+                    const asistenciasFiltradas = asistencias.filter(a => {
+                        const fecha = new Date(a.timestamp).toISOString().split('T')[0];
+                        return fecha >= fechaInicio && fecha <= fechaFin;
+                    });
+
+                    generarReporteImprimible(asistenciasFiltradas, fechaInicio, fechaFin);
+                    modal.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error al generar reporte:', error);
+                alert('Error al generar el reporte');
+            }
+        });
+
+        // Generar reporte imprimible
+        function generarReporteImprimible(asistencias, fechaInicio, fechaFin) {
+            const ventanaImpresion = window.open('', '_blank');
+            
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Reporte de Asistencias</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 20px;
+                            color: #333;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #1D0C4F;
+                            padding-bottom: 20px;
+                        }
+                        .header h1 {
+                            color: #1D0C4F;
+                            margin: 0;
+                        }
+                        .info {
+                            margin-bottom: 20px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 12px;
+                            text-align: left;
+                        }
+                        th {
+                            background-color: #1D0C4F;
+                            color: white;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f9f9f9;
+                        }
+                        .entrada {
+                            color: #1D0C4F;
+                            background-color: #F4F48C;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            font-weight: bold;
+                        }
+                        .salida {
+                            color: #000;
+                            background-color: #7DC3FD;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            font-weight: bold;
+                        }
+                        .footer {
+                            margin-top: 30px;
+                            text-align: center;
+                            font-size: 12px;
+                            color: #666;
+                        }
+                        @media print {
+                            button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Sistema de Asistencia</h1>
+                        <h2>Reporte de Asistencias</h2>
+                    </div>
+                    <div class="info">
+                        <p><strong>Período:</strong> ${new Date(fechaInicio).toLocaleDateString('es-ES')} - ${new Date(fechaFin).toLocaleDateString('es-ES')}</p>
+                        <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString('es-ES')}</p>
+                        <p><strong>Total de registros:</strong> ${asistencias.length}</p>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Usuario</th>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            asistencias.forEach(a => {
+                const fecha = new Date(a.timestamp);
+                const tipoClass = a.tipo === 'entrada' ? 'entrada' : 'salida';
+                const icono = a.tipo === 'entrada' ? '⏱️' : '🚪';
+                
+                html += `
+                    <tr>
+                        <td>${fecha.toLocaleDateString('es-ES')}</td>
+                        <td>${fecha.toLocaleTimeString('es-ES')}</td>
+                        <td>${a.username}</td>
+                        <td>${a.nombre}</td>
+                        <td class="${tipoClass}">${icono} ${a.tipo.toUpperCase()}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        <p>Generado por Sistema de Asistencia - ${new Date().getFullYear()}</p>
+                    </div>
+                    <script>
+                        window.onload = () => {
+                            window.print();
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            ventanaImpresion.document.write(html);
+            ventanaImpresion.document.close();
+        }
+
+        // Cerrar sesión
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'index.html';
+        });
+
+        // Cargar datos iniciales
+        cargarEstadisticas();
+        cargarUsuarios();
+        cargarAsistencias();
+
+        // Actualizar estadísticas cada 30 segundos
+        setInterval(cargarEstadisticas, 30000);
+    </script>
+</body>
+</html>

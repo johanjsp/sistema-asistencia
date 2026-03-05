@@ -1,0 +1,46 @@
+/* Variables de Colores del Sistema de Asistencia */
+
+:root {
+    /* Colores Principales */
+    --color-principal: #1D0C4F;      /* Morado oscuro - Color principal */
+    --color-secundario: #7DC3FD;     /* Azul claro - Color secundario */
+    --color-terciario: #F4F48C;      /* Amarillo - Color terciario */
+    
+    /* Colores de Texto */
+    --color-texto-principal: #000;   /* Negro para texto principal */
+    --color-texto-secundario: #333;  /* Gris oscuro para texto secundario */
+    --color-texto-suave: #666;       /* Gris medio */
+    --color-texto-claro: #999;       /* Gris claro */
+    
+    /* Colores de Fondo */
+    --color-fondo-claro: #f5f7fa;
+    --color-fondo-blanco: #ffffff;
+    --color-fondo-gris: #f8f9fa;
+    
+    /* Colores de Bordes */
+    --color-borde: #e0e0e0;
+    --color-borde-hover: var(--color-secundario);
+    
+    /* Sombras */
+    --sombra-suave: 0 4px 15px rgba(0, 0, 0, 0.08);
+    --sombra-media: 0 6px 20px rgba(0, 0, 0, 0.12);
+    --sombra-fuerte: 0 8px 32px rgba(0, 0, 0, 0.1);
+    
+    /* Colores de Estado */
+    --color-exito: #4CAF50;
+    --color-error: #ff4444;
+    --color-advertencia: #FFC107;
+    --color-info: var(--color-secundario);
+}
+
+/* Tema Oscuro (opcional para futuro) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-fondo-claro: #1a1a1a;
+        --color-fondo-blanco: #2d2d2d;
+        --color-fondo-gris: #3a3a3a;
+        --color-texto-principal: #ffffff;
+        --color-texto-secundario: #e0e0e0;
+        --color-borde: #4a4a4a;
+    }
+}
