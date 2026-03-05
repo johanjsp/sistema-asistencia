@@ -28,8 +28,18 @@ if (usePostgres) {
         let paramIndex = 0;
         pgSql = pgSql.replace(/\?/g, () => `$${++paramIndex}`);
 
-        await pool.query(pgSql, params);
-        callback(null);
+        // Si es un INSERT, agregar RETURNING id para obtener el lastID
+        let result;
+        if (pgSql.trim().toUpperCase().startsWith('INSERT')) {
+          pgSql += ' RETURNING id';
+          result = await pool.query(pgSql, params);
+          // Crear contexto con lastID para simular SQLite
+          const context = { lastID: result.rows[0]?.id };
+          callback.call(context, null);
+        } else {
+          result = await pool.query(pgSql, params);
+          callback(null);
+        }
       } catch (err) {
         callback(err);
       }
