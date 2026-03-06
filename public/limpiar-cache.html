@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpiar Caché PWA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #4CAF50; }
+        .btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 10px;
+        }
+        .btn:hover {
+            background: #d32f2f;
+        }
+        .btn-success {
+            background: #4CAF50;
+        }
+        .btn-success:hover {
+            background: #45a049;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .status.success {
+            background: #e7f3e7;
+            color: #2e7d32;
+            display: block;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpiar Caché de PWA</h1>
+        
+        <div class="info">
+            <p><strong>¿Cuándo usar esto?</strong></p>
+            <ul>
+                <li>Si no puedes hacer login después de un despliegue</li>
+                <li>Si ves contenido antiguo o desactualizado</li>
+                <li>Si la app no funciona correctamente</li>
+                <li>Si ves errores extraños</li>
+            </ul>
+        </div>
+
+        <button class="btn" onclick="limpiarCache()">🗑️ Limpiar Todo el Caché</button>
+        <button class="btn" onclick="desregistrarSW()">❌ Desregistrar Service Worker</button>
+        <button class="btn btn-success" onclick="limpiarTodo()">🔄 Limpieza Completa + Recargar</button>
+
+        <div id="status" class="status"></div>
+
+        <div class="info">
+            <p><strong>Pasos después de limpiar:</strong></p>
+            <ol>
+                <li>Haz clic en "Limpieza Completa + Recargar"</li>
+                <li>Espera a que recargue la página</li>
+                <li>Intenta hacer login nuevamente</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const status = document.getElementById('status');
+
+        function mostrarMensaje(mensaje, tipo) {
+            status.textContent = mensaje;
+            status.className = `status ${tipo}`;
+        }
+
+        async function limpiarCache() {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(name => caches.delete(name))
+                );
+                mostrarMensaje(`✅ ${cacheNames.length} cachés eliminados correctamente`, 'success');
+                console.log('Cachés eliminados:', cacheNames);
+            } catch (error) {
+                mostrarMensaje(`❌ Error al limpiar caché: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        async function desregistrarSW() {
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                    mostrarMensaje(`✅ ${registrations.length} Service Workers desregistrados`, 'success');
+                    console.log('Service Workers desregistrados');
+                } else {
+                    mostrarMensaje('⚠️ Service Workers no soportados en este navegador', 'error');
+                }
+            } catch (error) {
+                mostrarMensaje(`❌ Error al desregistrar: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        async function limpiarTodo() {
+            mostrarMensaje('🔄 Limpiando todo...', 'success');
+            
+            try {
+                // Limpiar caché
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(name => caches.delete(name))
+                );
+                
+                // Desregistrar service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+                
+                // Limpiar localStorage
+                localStorage.clear();
+                
+                // Limpiar sessionStorage
+                sessionStorage.clear();
+                
+                mostrarMensaje('✅ Limpieza completa exitosa. Recargando en 2 segundos...', 'success');
+                
+                // Recargar la página después de 2 segundos
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+                
+            } catch (error) {
+                mostrarMensaje(`❌ Error durante limpieza: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Mostrar información al cargar
+        window.onload = () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    console.log(`Service Workers activos: ${registrations.length}`);
+                    registrations.forEach((reg, i) => {
+                        console.log(`SW ${i + 1}:`, reg.scope);
+                    });
+                });
+            }
+            
+            caches.keys().then(names => {
+                console.log(`Cachés activos: ${names.length}`);
+                console.log('Nombres:', names);
+            });
+        };
+    </script>
+</body>
+</html>

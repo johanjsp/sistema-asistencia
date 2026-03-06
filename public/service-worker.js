@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asistencia-biometrica-v1';
+const CACHE_NAME = 'asistencia-biometrica-v2'; // Versión actualizada
 const urlsToCache = [
   '/',
   '/index.html',
@@ -52,37 +52,29 @@ self.addEventListener('activate', (event) => {
 
 // Estrategia: Network First, fallback a Cache
 self.addEventListener('fetch', (event) => {
-  // Omitir requests que no sean GET
+  const url = new URL(event.request.url);
+  
+  // NUNCA cachear peticiones a la API - dejarlas pasar directamente
+  if (url.pathname.startsWith('/api/')) {
+    return; // No interceptar, dejar que vaya directo al servidor
+  }
+  
+  // NUNCA cachear peticiones que no sean GET
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // Omitir requests a la API
-  if (event.request.url.includes('/api/')) {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return new Response(
-            JSON.stringify({ error: 'Sin conexión a internet' }),
-            { 
-              headers: { 'Content-Type': 'application/json' },
-              status: 503
-            }
-          );
-        })
-    );
-    return;
-  }
-
-  // Para todo lo demás: Network First con fallback a Cache
+  // Para archivos estáticos: Network First con fallback a Cache
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // Clonar la respuesta para guardarla en caché
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+        if (response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
         return response;
       })
       .catch(() => {
