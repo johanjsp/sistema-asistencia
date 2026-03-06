@@ -11,7 +11,9 @@ const urlsToCache = [
   '/app.js',
   '/config.js',
   '/img/logocolor.png',
-  '/img/logoblanca.png'
+  '/img/logoblanca.png',
+  '/img/launchericon-192x192.png',
+  '/img/launchericon-512x512.png'
 ];
 
 // Instalación del Service Worker
@@ -114,8 +116,8 @@ async function syncAsistencias() {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'Nueva notificación',
-    icon: '/img/icon-192x192.png',
-    badge: '/img/icon-72x72.png',
+    icon: '/img/launchericon-192x192.png',
+    badge: '/img/launchericon-72x72.png',
     vibrate: [200, 100, 200]
   };
 
