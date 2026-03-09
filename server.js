@@ -281,7 +281,15 @@ app.get('/api/admin/estadisticas', verificarToken, verificarAdmin, (req, res) =>
   const salidaSQL = usePostgres ? "'salida'" : '"salida"';
   
   const queries = {
-    totalUsuarios: `SELECT COUNT(*) as total FROM usuarios WHERE rol = ${trabajadorSQL}`,
+    // Contar trabajadores activos (cuya última asistencia es entrada)
+    totalUsuarios: `SELECT COUNT(DISTINCT a1.usuario_id) as total
+      FROM asistencias a1
+      WHERE a1.tipo = ${entradaSQL}
+      AND a1.timestamp = (
+        SELECT MAX(a2.timestamp)
+        FROM asistencias a2
+        WHERE a2.usuario_id = a1.usuario_id
+      )`,
     registrosHoy: `SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = ${hoySQL}`,
     entradasHoy: `SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = ${hoySQL} AND tipo = ${entradaSQL}`,
     salidasHoy: `SELECT COUNT(*) as total FROM asistencias WHERE DATE(timestamp) = ${hoySQL} AND tipo = ${salidaSQL}`
