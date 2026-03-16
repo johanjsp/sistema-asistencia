@@ -4,6 +4,11 @@
     box-sizing: border-box;
 }
 
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #1D0C4F;
@@ -12,6 +17,7 @@ body {
     justify-content: center;
     align-items: center;
     padding: 20px;
+    overflow-x: hidden;
 }
 
 .container {
@@ -34,6 +40,7 @@ body {
     color: #1D0C4F;
     margin-bottom: 10px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-wrap: anywhere;
 }
 
 .date {
@@ -214,6 +221,7 @@ input[type="password"]:focus {
 .header-section h1 {
     margin: 0;
     font-size: 1.5rem;
+    overflow-wrap: anywhere;
 }
 
 .attendance-section {
@@ -316,6 +324,7 @@ input[type="password"]:focus {
 .historial-fecha {
     color: #666;
     font-size: 0.9rem;
+    overflow-wrap: anywhere;
 }
 
 .no-data {
@@ -411,12 +420,14 @@ input[type="password"]:focus {
         padding: 12px;
     }
 
+    .historial-tipo,
     .historial-item .tipo {
         width: 100%;
         text-align: center;
         margin-bottom: 8px;
     }
 
+    .historial-fecha,
     .historial-item .fecha {
         text-align: center;
         width: 100%;

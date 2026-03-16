@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     
@@ -260,11 +260,11 @@
                 
                 html += `
                     <tr>
-                        <td>${fecha.toLocaleString('es-ES')}</td>
-                        <td>${a.username}</td>
-                        <td>${a.nombre}</td>
-                        <td><span class="badge ${tipoClass}">${icono} ${a.tipo.toUpperCase()}</span></td>
-                        <td>
+                        <td data-label="Fecha/Hora">${fecha.toLocaleString('es-ES')}</td>
+                        <td data-label="Usuario">${a.username}</td>
+                        <td data-label="Nombre">${a.nombre}</td>
+                        <td data-label="Tipo"><span class="badge ${tipoClass}">${icono} ${a.tipo.toUpperCase()}</span></td>
+                        <td data-label="Acciones">
                             <button class="btn-delete" onclick="eliminarRegistro(${a.id})" title="Eliminar registro">
                                 🗑️
                             </button>
@@ -533,5 +533,4 @@
         setInterval(cargarEstadisticas, 30000);
     </script>
 </body>
-
 </html>
